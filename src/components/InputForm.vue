@@ -1,84 +1,135 @@
 <script setup>
-import { reactive, ref } from "vue";
-import { idVarify } from "@/utils/idVarify";
-import { inputVarify } from "@/utils/inputVarify";
-import axios from "axios";
+import { reactive, ref } from 'vue';
+import { idVerify } from '@/utils/idVerify.js';
+import { inputVerify } from '@/utils/inputVerify.js';
+import axios from 'axios';
 
-// 定義ref
+const emit = defineEmits(['getData']);
+
+// 收集用戶輸入資料
 const userData = reactive({
-  id: "",
-  name: "",
-  phone: "",
-  address: "",
-  remark: "",
+  id: '',
+  name: '',
+  phone: '',
+  address: '',
+  remark: '',
 });
-
-const errorMessage = ref();
-
-// // 驗證ID
-// idVarify(userData.id);
-// // 驗證input
-// inputVarify(userData);
 
 // 清空用戶資料
 const clearUserData = () => {
-  userData.id = "";
-  userData.name = "";
-  userData.phone = "";
-  userData.address = "";
-  userData.remark = "";
-}
+  userData.id = '';
+  userData.name = '';
+  userData.phone = '';
+  userData.address = '';
+  userData.remark = '';
+};
+
+// 收集錯誤訊息
+const errorMessage = reactive({
+  id: '',
+  name: '',
+  phone: '',
+  address: '',
+});
+
+// 清空錯誤訊息
+const clearErrorMessage = () => {
+  errorMessage.id = '';
+  errorMessage.name = '';
+  errorMessage.phone = '';
+  errorMessage.address = '';
+};
 
 // 處理保存數據時的錯誤
-const handleError = (error) => {
-  errorMessage.value = error.message; // 將錯誤訊息設置到errorMessage中
-}
+const handleError = (error, key = 'id') => {
+  errorMessage[key] = error.message; // 將錯誤訊息設置到errorMessage中
+};
 
 // 保存用戶數據
-const saveData = async () => {
-  try {
-    const response = await axios.post('/users', userData.value);
-    console.log('Data saved: ', response.data);
-    // 保存成功後清空用戶資料
-    clearUserData();
-  } catch (error) {
-    console.error('Error saving data: ', error);
-    // 保存失敗時處理錯誤
-    handleError(error);
-  }
-}
+// const saveData = async () => {
+//   try {
+//     const response = await axios.post('/api/users', userData);
+//     console.log('User saved', response.data);
+//     // 保存成功後清空用戶資料
+//     clearUserData();
+//   } catch (e) {
+//     console.error('Err! saveData: ', e);
+//     // 保存失敗時處理錯誤
+//     handleError(e);
+//   }
+// };
 
 // 新增用戶
-const addNew = () => {
-  axios.post('/api/users', {
-    id: userData.id,
-    name: userData.name,
-    phone: userData.phone,
-    address: userData.address,
-    remark: userData.remark,
-  }).then(response => {
-    console.log('New user added', response.data);
-    clearUserData();
-    alert('新增用戶成功！');
-  }).catch(error => {
-    console.error('Error adding new user: ', error);
-    handleError(error);
-  })
-}
+const addNew = async () => {
+  // 清除錯誤訊息
+  clearErrorMessage();
+
+  // 檢查必填項目
+  const emptyInputs = inputVerify(userData);
+  if (emptyInputs.length > 0) {
+    emptyInputs.forEach((item) => {
+      handleError({ message: '必填項目未填' }, item);
+    });
+    return;
+  }
+
+  // 驗證身分證字號
+  const idError = idVerify(userData.id);
+  if (!idError.answer) {
+    handleError(idError, 'id');
+    return;
+  }
+
+  // Fetch POST
+  try {
+    const response = await axios.post('/api/users', userData);
+    if (response.status === 200) {
+      clearUserData();
+      console.log('New user added', response.data);
+      alert('新增用戶成功！');
+      emit('getData');
+    }
+  } catch (e) {
+    console.error('Err!! addNew:', e);
+  }
+};
 
 // 刪除用戶
-const deleteItem = (id) => {
-  axios.delete('api/users/' + userData.id).then(response => {
-    console.log('New user added', response.data);
-    clearUserData();
-    alert('刪除用戶成功！');
-  })
-}
+const deleteItem = async () => {
+  // 清除錯誤訊息
+  clearErrorMessage();
+
+  // 檢查是否輸入 id，否則阻擋
+  if (!userData.id || userData.id === '') {
+    handleError({ message: '請輸入需刪除的身分證字號' }, 'id');
+    return;
+  }
+
+  // 驗證身分證字號
+  const idError = idVerify(userData.id);
+  if (!idError.answer) {
+    handleError(idError, 'id');
+    return;
+  }
+
+  // Fetch Del
+  try {
+    const response = await axios.delete('/api/users/' + userData.id);
+    if (response.status === 200) {
+      console.log('User deleted', response.data);
+      clearUserData();
+      alert('刪除用戶成功！');
+      emit('getData');
+    }
+  } catch (e) {
+    console.error('Err!! deleteItem:', e);
+  }
+};
 
 // 查詢用戶
 const searchData = () => {
   // 實現查詢用戶的邏輯
-}
+};
 </script>
 
 <template>
@@ -86,19 +137,15 @@ const searchData = () => {
     <div
       class="relative flex flex-col w-full h-full text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"
     >
-      <div
-        class="h-full flex flex-col items-center justify-center min-w-[350px] max-w-[500px]"
-      >
-        <h1 class="text-3xl justify-self-center pt-10 pb-5 pb-10">個人資料</h1>
-        <div class="grow mx-3 flex flex-col content-center">
+      <div class="h-full w-full flex flex-col items-center justify-center">
+        <h1 class="text-3xl justify-self-center pt-10 pb-10">個人資料</h1>
+        <div class="grow w-full px-6 flex flex-col content-center">
           <!-- 身分證字號輸入框 -->
-          <div class="relative h-10 w-full min-w-[250px]">
+          <div class="relative h-10 w-full">
             <input
               placeholder="A123456789"
               id="id"
               v-model="userData.id"
-              @idVarify="idVarify"
-              @inputVarify="inputVarify"
               class="peer h-full w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 placeholder:opacity-0 focus:placeholder:opacity-100"
             />
             <label
@@ -108,27 +155,34 @@ const searchData = () => {
               身分證字號
             </label>
           </div>
-          <div v-if="errorMessage"
-            class="rounded-xl shadow-sm overflow-hidden flex items-center p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
-            role="alert">
-            <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor" viewBox="0 0 20 20">
+          <div
+            v-if="errorMessage.id"
+            class="shadow-sm overflow-hidden flex items-center p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+            role="alert"
+          >
+            <svg
+              class="flex-shrink-0 inline w-4 h-4 me-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
               <path
-                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+              />
             </svg>
             <span class="sr-only">Info</span>
             <div>
-              <span class="font-medium">注意！</span>{{ errorMessage }}
+              <span class="font-medium">注意！</span>{{ errorMessage.id }}
             </div>
           </div>
 
           <!-- 姓名輸入框 -->
-          <div class="relative h-10 w-full min-w-[200px] mt-5">
+          <div class="relative h-10 w-full mt-5">
             <input
               placeholder="王小明"
               id="name"
               v-model="userData.name"
-              @inputVarify="inputVarify"
               class="peer h-full w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 placeholder:opacity-0 focus:placeholder:opacity-100"
             />
             <label
@@ -138,14 +192,34 @@ const searchData = () => {
               姓名
             </label>
           </div>
+          <div
+            v-if="errorMessage.name"
+            class="shadow-sm overflow-hidden flex items-center p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+            role="alert"
+          >
+            <svg
+              class="flex-shrink-0 inline w-4 h-4 me-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+              />
+            </svg>
+            <span class="sr-only">Info</span>
+            <div>
+              <span class="font-medium">注意！</span>{{ errorMessage.name }}
+            </div>
+          </div>
 
           <!-- 電話輸入框 -->
-          <div class="relative h-10 w-full min-w-[200px] mt-5">
+          <div class="relative h-10 w-full mt-5">
             <input
               placeholder="0912345678"
               id="phone"
               v-model="userData.phone"
-              @inputVarify="inputVarify"
               class="peer h-full w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 placeholder:opacity-0 focus:placeholder:opacity-100"
             />
             <label
@@ -155,14 +229,34 @@ const searchData = () => {
               電話
             </label>
           </div>
+          <div
+            v-if="errorMessage.phone"
+            class="shadow-sm overflow-hidden flex items-center p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+            role="alert"
+          >
+            <svg
+              class="flex-shrink-0 inline w-4 h-4 me-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+              />
+            </svg>
+            <span class="sr-only">Info</span>
+            <div>
+              <span class="font-medium">注意！</span>{{ errorMessage.phone }}
+            </div>
+          </div>
 
           <!-- 地址 -->
-          <div class="relative h-10 w-full min-w-[200px] mt-5">
+          <div class="relative h-10 w-full mt-5">
             <input
               placeholder="地球台灣"
               id="address"
               v-model="userData.address"
-              @inputVarify="inputVarify"
               class="peer h-full w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50 placeholder:opacity-0 focus:placeholder:opacity-100"
             />
             <label
@@ -172,9 +266,30 @@ const searchData = () => {
               地址
             </label>
           </div>
-          
+          <div
+            v-if="errorMessage.address"
+            class="shadow-sm overflow-hidden flex items-center p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+            role="alert"
+          >
+            <svg
+              class="flex-shrink-0 inline w-4 h-4 me-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+              />
+            </svg>
+            <span class="sr-only">Info</span>
+            <div>
+              <span class="font-medium">注意！</span>{{ errorMessage.address }}
+            </div>
+          </div>
+
           <!-- 備註輸入框 -->
-          <div class="relative h-10 w-full min-w-[200px] mt-5">
+          <div class="relative h-10 w-full mt-5">
             <input
               placeholder="珍珠奶茶"
               id="remark"
@@ -190,40 +305,38 @@ const searchData = () => {
           </div>
         </div>
 
+        <!--   按鈕：增刪改查   -->
         <div
-          class="flex items-center justify-between p-4 border-t border-blue-gray-50"
+          class="w-full flex gap-3 justify-between py-4 px-6 border-t border-blue-gray-50 overflow-auto"
         >
-          <!--   按鈕：增刪改查   -->
-          <div class="mt-5 flex space-x-3 mb-10">
-            <button
-              @click="addNew"
-              class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-              type="button"
-            >
-              新增
-            </button>
-            <button
-              @click="deleteItem"
-              class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-              type="button"
-            >
-              刪除
-            </button>
-            <button
-              @click="saveData"
-              class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-              type="button"
-            >
-              儲存
-            </button>
-            <button
-              @click="searchData"
-              class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-              type="button"
-            >
-              查詢
-            </button>
-          </div>
+          <button
+            @click="addNew"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            新增
+          </button>
+          <button
+            @click="deleteItem"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            刪除
+          </button>
+          <button
+            @click="saveData"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            儲存
+          </button>
+          <button
+            @click="searchData"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            查詢
+          </button>
         </div>
       </div>
     </div>

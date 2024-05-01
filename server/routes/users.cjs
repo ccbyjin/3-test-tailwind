@@ -34,9 +34,6 @@ router.post("/", connSql, async (req, res) => {
 
 // 處理 GET /users 的 API：獲取用戶
 router.get("/", connSql, async (req, res) => {
-  // 接收前端放在 body data 裏傳來後端的資料
-  const { id, name, phone, address, remark } = req.body;
-
   try {
     // 建立 mssql 請求物件
     const request = await req.pool.request();
@@ -93,9 +90,10 @@ router.delete("/:id", connSql, async (req, res) => {
   const userId = req.params.id;
   try {
     const request = await req.pool.request();
-    const result = await request.query("DELETE FROM list WHERE id = @id", {
-      id: userId
-    });
+
+    request.input('id', sql.Char, userId);
+
+    const result = await request.query("DELETE FROM list WHERE id = @id");
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error("Error at Delete SQL Server", err);

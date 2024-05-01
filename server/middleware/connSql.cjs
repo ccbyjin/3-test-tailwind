@@ -1,16 +1,28 @@
 const sql = require("mssql");
 
 // sql server 設定
+// const config = {
+//   user: "sa", //sqlap
+//   password: "strongp@ssword", //Ubot@1234
+//   server: "192.168.1.114", //172.16.45.213 //192.168.1.114
+//   database: "list",
+//   options: {
+//     encrypt: true,
+//     trustServerCertificate: true,
+//   },
+// };
+
+// nana - sql server 設定
 const config = {
-  user: "sa", //sqlap
-  password: "strongp@ssword", //Ubot@1234
-  server: "192.168.1.114", //172.16.45.213 //192.168.1.114
+  user: "sa",
+  password: "StrongP@ssw0rd",
+  server: "localhost",
   database: "list",
   options: {
     encrypt: true,
     trustServerCertificate: true,
   },
-};
+}
 
 // 建立連接
 let pool;

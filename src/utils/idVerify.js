@@ -1,4 +1,3 @@
-
 const IdCodeList = {
   A: 10,
   B: 11,
@@ -28,14 +27,17 @@ const IdCodeList = {
   Z: 33,
 };
 
-function idVarify(val) {
+function idVerify(val) {
+  if (!/^[A-Z]\d{9}$/.test(val))
+    return { answer: false, message: '格式錯誤，請輸入正確身分證字號！' };
+
   let result = 0;
 
   let eToN = IdCodeList[val.charAt(0)];
   result += parseInt(eToN.toString().charAt(0));
   result += parseInt(eToN.toString().charAt(1)) * 9;
 
-  val = val.split("");
+  val = val.split('');
   let endVal = val.pop();
 
   for (let i = 1; i < 9; i++) {
@@ -46,8 +48,8 @@ function idVarify(val) {
   let answer = (10 - mod).toString().slice(-1);
 
   if (endVal === answer)
-  return { answer: true, message: "國民身分證驗證成功！" };
+    return { answer: true, message: '國民身分證驗證成功！' };
   return { answer: false, message: `驗證失敗，正確檢核碼為${answer}` };
 }
 
-export { idVarify };
+export { idVerify };
