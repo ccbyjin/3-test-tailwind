@@ -47,14 +47,24 @@ router.get("/", connSql, async (req, res) => {
 });
 
 // 處理 GET /users/:id 的 API：獲取特定用戶
+ashdhsadas
+
 router.get("/:id", connSql, async (req, res) => {
   const userId = req.params.id;
   try{
+
+ // dao.select(id)
+
     const request = await req.pool.request();
-    const result = await request.query("SELECT * FROM list WHERE id = @id", {
-      id: userId
-    });
+    
+    request.input("id", sql.Char, userId);
+
+    const result = await request.query("SELECT * FROM list WHERE id = @id");
+    
     res.status(200).json(result.recordset);
+    
+    console.log(result.recordset);
+
   } catch (err) {
     console.error("Error at Get by ID SQL Server", err);
     res.status(500).send('Error at Get by ID SQL Server');

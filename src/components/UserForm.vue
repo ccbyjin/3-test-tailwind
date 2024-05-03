@@ -1,5 +1,11 @@
 <script setup>
+import { defineProps, defineEmits } from 'vue';
 const props = defineProps(['userData']);
+const emits = defineEmits(['clickUser']);
+
+const handleClick = (user) => {
+  emits('clickUser', user);
+};
 </script>
 
 <template>
@@ -167,7 +173,7 @@ const props = defineProps(['userData']);
           </thead>
           <!--          表格內容-->
           <tbody>
-            <tr v-for="user in props.userData" :key="user.id">
+            <tr v-for="user in props.userData" :key="user.id" @click="handleClick(user)">
               <td class="p-4 border-b border-blue-gray-50">
                 <div class="flex items-center gap-3">
                   <p

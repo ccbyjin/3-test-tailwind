@@ -1,10 +1,13 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, watchEffect, defineProps } from 'vue';
 import { idVerify } from '@/utils/idVerify.js';
 import { inputVerify } from '@/utils/inputVerify.js';
 import axios from 'axios';
 
 const emit = defineEmits(['getData']);
+const props = defineProps({
+  selectedUser: Object,
+});
 
 // 收集用戶輸入資料
 const userData = reactive({
@@ -23,6 +26,18 @@ const clearUserData = () => {
   userData.address = '';
   userData.remark = '';
 };
+
+// 將選中的數據傳送至input框中
+watchEffect(() => {
+  if(props.selectedUser){
+    userData.id = props.selectedUser.id;
+    userData.name = props.selectedUser.name;
+    userData.phone = props.selectedUser.phone;
+    userData.address = props.selectedUser.address;
+    userData.remark = props.selectedUser.remark;  
+  }
+});
+
 
 // 收集錯誤訊息
 const errorMessage = reactive({
@@ -46,18 +61,39 @@ const handleError = (error, key = 'id') => {
 };
 
 // 保存用戶數據
-// const saveData = async () => {
-//   try {
-//     const response = await axios.post('/api/users', userData);
-//     console.log('User saved', response.data);
-//     // 保存成功後清空用戶資料
-//     clearUserData();
-//   } catch (e) {
-//     console.error('Err! saveData: ', e);
-//     // 保存失敗時處理錯誤
-//     handleError(e);
-//   }
-// };
+const saveData = async () => {
+  // 清除錯誤訊息
+  clearErrorMessage();
+
+  
+  try {
+    // 檢查用戶id是否存在
+    if(!userData.id){
+      alert('請選擇您想修改的用戶資料');
+      return;
+    };
+
+    try{
+      const response = await axios.put(`/api/users/${userData.id}`, userData);
+      if(response.status === 200){
+        console.log('User updated', response.data);
+        alert('用戶資料更新成功!');
+        // 保存成功後清空用戶資料
+        clearUserData();
+        emit('getData');
+      };
+    } catch (e) {
+      console.error('Err! saveData: ', e);
+      alert('用戶資料更新失敗!');
+      // 保存失敗時處理錯誤
+      handleError(e);
+    };
+  } catch (e) {
+    console.error('保存用戶數據錯誤:', e);
+    alert('保存用戶數據錯誤');
+    handleError(e);
+  }
+};
 
 // 新增用戶
 const addNew = async () => {
@@ -91,6 +127,7 @@ const addNew = async () => {
     }
   } catch (e) {
     console.error('Err!! addNew:', e);
+    alert('新增用戶失敗!');
   }
 };
 
@@ -106,11 +143,11 @@ const deleteItem = async () => {
   }
 
   // 驗證身分證字號
-  const idError = idVerify(userData.id);
-  if (!idError.answer) {
-    handleError(idError, 'id');
-    return;
-  }
+  // const idError = idVerify(userData.id);
+  // if (!idError.answer) {
+  //   handleError(idError, 'id');
+  //   return;
+  // }
 
   // Fetch Del
   try {
@@ -123,12 +160,40 @@ const deleteItem = async () => {
     }
   } catch (e) {
     console.error('Err!! deleteItem:', e);
+    alert('刪除用戶失敗!');
   }
 };
 
-// 查詢用戶
-const searchData = () => {
-  // 實現查詢用戶的邏輯
+// 查詢用戶資料
+const searchData = async () => {
+  // 清除錯誤訊息
+  clearErrorMessage();
+
+  // 檢查是否輸入id
+  if(!userData.id || userData.id === ''){
+    handleError({message: '請輸入要查詢的身分證字號'}, 'id');
+    return;
+  }
+
+  try {
+    const response = await axios.get(`/api/users/:id=${userData.id}`);
+    if(response.status === 200){
+      // 填充表單
+      const { data } = response;
+      userData.name = data.name;
+      userData.phone = data.phone;
+      userData.address = data.address;
+      userData.remark = data.remark;
+    }
+  } catch (e) {
+    console.error('Err!! searchData: ', e);
+    if(e.response.status === 404){
+      alert('用戶不存在');
+    }else{
+      console.log('error to get user by id: ', e);
+      alert('查詢用戶失敗');
+    }
+  }
 };
 </script>
 
@@ -317,13 +382,6 @@ const searchData = () => {
             新增
           </button>
           <button
-            @click="deleteItem"
-            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-            type="button"
-          >
-            刪除
-          </button>
-          <button
             @click="saveData"
             class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
             type="button"
@@ -336,6 +394,20 @@ const searchData = () => {
             type="button"
           >
             查詢
+          </button>
+          <button
+            @click="deleteItem"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            刪除
+          </button>
+          <button
+            @click="clearUserData"
+            class="bg-white select-none rounded-lg border border-gray-900 py-2 px-4 text-center whitespace-nowrap align-middle font-sans text-xs font-bold uppercase text-gray-900 transition-all hover:opacity-75 focus:ring focus:ring-gray-300 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+          >
+            清除
           </button>
         </div>
       </div>

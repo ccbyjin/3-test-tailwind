@@ -6,6 +6,7 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 
 const userData = ref([]);
+const selectedUser = ref(null);
 
 const getData = async () => {
   try {
@@ -14,6 +15,11 @@ const getData = async () => {
   } catch (e) {
     console.error('Err!! GET user data:', e);
   }
+};
+
+// 獲取該用戶資料
+const handleUserClick = (user) => {
+  selectedUser.value = user;
 };
 
 // 在組件創建時獲取用戶數據
@@ -25,11 +31,11 @@ onMounted(async () => {
 <template>
   <div class="flex gap-5 p-10 h-screen">
     <div class="flex flex-col w-1/3 items-center justify-center">
-      <InputForm @get-data="getData" />
+      <InputForm @get-data="getData" :selectedUser="selectedUser"/>
     </div>
 
     <div class="w-2/3 h-full">
-      <UserForm :user-data="userData" />
+      <UserForm :user-data="userData" @clickUser="handleUserClick"/>
     </div>
   </div>
 </template>
