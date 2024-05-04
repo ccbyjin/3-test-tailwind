@@ -25,6 +25,8 @@ const clearUserData = () => {
   userData.phone = '';
   userData.address = '';
   userData.remark = '';
+
+  clearErrorMessage();
 };
 
 // 將選中的數據傳送至input框中
@@ -176,10 +178,10 @@ const searchData = async () => {
   }
 
   try {
-    const response = await axios.get(`/api/users/:id=${userData.id}`);
+    const response = await axios.get(`/api/users/${userData.id}`);
     if(response.status === 200){
       // 填充表單
-      const { data } = response;
+      const data = response.data[0];
       userData.name = data.name;
       userData.phone = data.phone;
       userData.address = data.address;
@@ -203,8 +205,8 @@ const searchData = async () => {
       class="relative flex flex-col w-full h-full text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"
     >
       <div class="h-full w-full flex flex-col items-center justify-center">
-        <h1 class="text-3xl justify-self-center pt-10 pb-10">個人資料</h1>
-        <div class="grow w-full px-6 flex flex-col content-center">
+        <h1 class="text-3xl justify-self-center pt-9 pb-7">個人資料</h1>
+        <div class="grow w-full pt-2 px-6 flex flex-col content-center overflow-auto">
           <!-- 身分證字號輸入框 -->
           <div class="relative h-10 w-full">
             <input
@@ -372,7 +374,7 @@ const searchData = async () => {
 
         <!--   按鈕：增刪改查   -->
         <div
-          class="w-full flex gap-3 justify-between py-4 px-6 border-t border-blue-gray-50 overflow-auto"
+          class="shrink-0 w-full flex gap-3 justify-between py-4 px-6 border-t border-blue-gray-50 overflow-auto"
         >
           <button
             @click="addNew"

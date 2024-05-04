@@ -35,36 +35,53 @@ router.post("/", connSql, async (req, res) => {
 // 處理 GET /users 的 API：獲取用戶
 router.get("/", connSql, async (req, res) => {
   try {
+    const currentPage = req.query.page;
+
     // 建立 mssql 請求物件
     const request = await req.pool.request();
-    const result = await request.query("SELECT * FROM list");
 
-    res.status(200).json(result.recordset);
+    let result = await request.query("SELECT * FROM list");
+    result = result.recordset;
+    const pages = Math.ceil(result.length / 4);
+
+    if (currentPage) {
+      const index = (currentPage - 1) * 4;
+      result = result.slice(index, index + 4);
+    }
+
+    res.status(200).json({result, pages});
   } catch (err) {
     console.error("Error to Get all SQL Server", err);
     res.status(500).send('Error at Get all SQL Server');
   }
 });
 
-// 處理 GET /users/:id 的 API：獲取特定用戶
-ashdhsadas
+// FE -> BE
+// config: { params: { key: value } } -> req.query
+// url: /${value} -> req.params.key (route '/:key')
+// POST data: { key: value } -> req.body.key
 
-router.get("/:id", connSql, async (req, res) => {
-  const userId = req.params.id;
+// 處理 GET /users/:val 的 API：獲取特定用戶
+router.get("/:val", connSql, async (req, res) => {
+  const searchVal = req.params.val;
+  const currentPage = req.query.page;
+
   try{
-
- // dao.select(id)
-
     const request = await req.pool.request();
     
-    request.input("id", sql.Char, userId);
+    request.input("val", sql.Char, '%' + searchVal + '%');
 
-    const result = await request.query("SELECT * FROM list WHERE id = @id");
-    
-    res.status(200).json(result.recordset);
-    
-    console.log(result.recordset);
+    let result = await request.query("SELECT * FROM list WHERE id LIKE @val OR name LIKE @val OR phone LIKE @val OR address LIKE @val OR remark LIKE @val");
+    result = result.recordset;
 
+    const pages = Math.ceil(result.length / 4);
+
+    if (currentPage) {
+      const index = (currentPage - 1) * 4;
+      result = result.slice(index, index + 4);
+    }
+
+    res.status(200).json({result, pages});
   } catch (err) {
     console.error("Error at Get by ID SQL Server", err);
     res.status(500).send('Error at Get by ID SQL Server');
