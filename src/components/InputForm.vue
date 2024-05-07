@@ -73,7 +73,7 @@ const saveData = async () => {
     if(!userData.id){
       alert('請選擇您想修改的用戶資料');
       return;
-    };
+    }
 
     try{
       const response = await axios.put(`/api/users/${userData.id}`, userData);
@@ -83,13 +83,13 @@ const saveData = async () => {
         // 保存成功後清空用戶資料
         clearUserData();
         emit('getData');
-      };
+      }
     } catch (e) {
       console.error('Err! saveData: ', e);
       alert('用戶資料更新失敗!');
       // 保存失敗時處理錯誤
       handleError(e);
-    };
+    }
   } catch (e) {
     console.error('保存用戶數據錯誤:', e);
     alert('保存用戶數據錯誤');

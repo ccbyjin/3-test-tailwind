@@ -1,5 +1,5 @@
 <script setup>
-import {ref, defineProps, defineEmits, computed} from 'vue';
+import {defineProps, defineEmits, computed} from 'vue';
 import FormPage from "@/components/FormPage.vue";
 const props = defineProps(['userData', 'searchVal', 'selectedPage']);
 const emits = defineEmits(['clickUser', 'searchData', 'changeSearch', 'changeSort', 'changePage']);
