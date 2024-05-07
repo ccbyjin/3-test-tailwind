@@ -181,7 +181,7 @@ const searchData = async () => {
     const response = await axios.get(`/api/users/${userData.id}`);
     if(response.status === 200){
       // 填充表單
-      const data = response.data[0];
+      const data = response.data.result[0];
       userData.name = data.name;
       userData.phone = data.phone;
       userData.address = data.address;

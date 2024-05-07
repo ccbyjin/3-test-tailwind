@@ -22,6 +22,23 @@ const searchValue = computed({
 const changePage = (page) =>{
   emits('changePage', page);
 }
+
+const tempData = computed({
+  get(){
+    const arr = props.userData.result;
+    if(!arr) return [];
+    const keys = Object.keys(arr[0]);
+    const times = 4 - arr.length;
+    for (let i = 0; i < times; i++){
+      const tp = {};
+      keys.forEach(key => {
+        tp[key] = null;
+      })
+      arr.push(tp);
+    }
+    return arr;
+  }
+})
 </script>
 
 <template>
@@ -106,7 +123,7 @@ const changePage = (page) =>{
 
       <!-- Table -->
       <div class="grow p-6 px-0 overflow-y-hidden">
-        <table class="w-full text-left table-auto min-w-max">
+        <table class="h-full w-full text-left table-auto min-w-max">
           <thead>
             <tr>
               <th class="p-4 border-y border-blue-gray-100 bg-blue-gray-50/50">
@@ -192,7 +209,7 @@ const changePage = (page) =>{
           </thead>
           <!--          表格內容-->
           <tbody>
-            <tr v-for="user in props.userData.result" :key="user.id">
+            <tr v-for="user in tempData" :key="user.id" class="h-1/4">
               <td class="p-4 border-b border-blue-gray-50">
                 <div class="flex items-center gap-3">
                   <p
@@ -231,7 +248,7 @@ const changePage = (page) =>{
                 </p>
               </td>
               <td class="p-4 border-b border-blue-gray-50">
-                <button
+                <button v-if="user.id"
                   class="relative h-10 max-h-[40px] w-10 max-w-[40px] select-none rounded-lg text-center align-middle font-sans text-xs font-medium uppercase text-gray-900 transition-all hover:bg-gray-900/10 active:bg-gray-900/20 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                   type="button" @click="handleClick(user)"
                 >
