@@ -23,12 +23,12 @@ router.post("/", connSql, async (req, res) => {
 
     // 執行 INSERT 語句
     const result = await request.query(
-      "INSERT INTO list VALUES (@id, @name, @phone, @address, @remark)"
+      "INSERT INTO list VALUES (@id, @name, @phone, @address, @remark)",
     );
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error("Error at Insert SQL Server", err);
-    res.status(500).send('Error at Insert SQL Server');
+    res.status(500).send("Error at Insert SQL Server");
   }
 });
 
@@ -41,7 +41,13 @@ router.get("/", connSql, async (req, res) => {
     const request = await req.pool.request();
 
     let result = await request.query("SELECT * FROM list");
+
     result = result.recordset;
+    let allUser = result;
+
+    console.log("Result from database:", result); // 打印數據庫查詢結果
+    console.log("All users:", allUser); // 打印所有用戶
+
     const pages = Math.ceil(result.length / 4);
 
     if (currentPage) {
@@ -49,10 +55,10 @@ router.get("/", connSql, async (req, res) => {
       result = result.slice(index, index + 4);
     }
 
-    res.status(200).json({result, pages});
+    res.status(200).json({ result, pages, allUser });
   } catch (err) {
     console.error("Error to Get all SQL Server", err);
-    res.status(500).send('Error at Get all SQL Server');
+    res.status(500).send("Error at Get all SQL Server");
   }
 });
 
@@ -66,12 +72,14 @@ router.get("/:val", connSql, async (req, res) => {
   const searchVal = req.params.val;
   const currentPage = req.query.page;
 
-  try{
+  try {
     const request = await req.pool.request();
-    
-    request.input("val", sql.Char, '%' + searchVal + '%');
 
-    let result = await request.query("SELECT * FROM list WHERE id LIKE @val OR name LIKE @val OR phone LIKE @val OR address LIKE @val OR remark LIKE @val");
+    request.input("val", sql.Char, "%" + searchVal + "%");
+
+    let result = await request.query(
+      "SELECT * FROM list WHERE id LIKE @val OR name LIKE @val OR phone LIKE @val OR address LIKE @val OR remark LIKE @val",
+    );
     result = result.recordset;
 
     const pages = Math.ceil(result.length / 4);
@@ -81,12 +89,12 @@ router.get("/:val", connSql, async (req, res) => {
       result = result.slice(index, index + 4);
     }
 
-    res.status(200).json({result, pages});
+    res.status(200).json({ result, pages });
   } catch (err) {
     console.error("Error at Get by ID SQL Server", err);
-    res.status(500).send('Error at Get by ID SQL Server');
+    res.status(500).send("Error at Get by ID SQL Server");
   }
-})
+});
 
 // 處理 PUT /users/:id 的 API：更新特定用戶
 router.put("/:id", connSql, async (req, res) => {
@@ -103,12 +111,12 @@ router.put("/:id", connSql, async (req, res) => {
     request.input("remark", sql.NVarChar, remark);
 
     const result = await request.query(
-      "UPDATE list SET name = @name, phone = @phone, address = @address, remark = @remark WHERE id = @id"
+      "UPDATE list SET name = @name, phone = @phone, address = @address, remark = @remark WHERE id = @id",
     );
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error("Error at Update SQL Server", err);
-    res.status(500).send('Error at Update SQL Server');
+    res.status(500).send("Error at Update SQL Server");
   }
 });
 
@@ -118,13 +126,13 @@ router.delete("/:id", connSql, async (req, res) => {
   try {
     const request = await req.pool.request();
 
-    request.input('id', sql.Char, userId);
+    request.input("id", sql.Char, userId);
 
     const result = await request.query("DELETE FROM list WHERE id = @id");
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error("Error at Delete SQL Server", err);
-    res.status(500).send('Error at Delete SQL Server');
+    res.status(500).send("Error at Delete SQL Server");
   }
 });
 
