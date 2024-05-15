@@ -63,25 +63,25 @@ const handleError = (error, key = "id") => {
   errorMessage[key] = error.message; // 將錯誤訊息設置到errorMessage中
 };
 
-// 檢查輸入框是否為空，如果為空禁用按鈕
-const disableSaveButton = () => {
-  const saveButton = document.getElementById("saveData");
-  if (!saveButton) return;
+// // 檢查輸入框是否為空，如果為空禁用按鈕
+// const disableSaveButton = () => {
+//   const saveButton = document.getElementById("saveData");
+//   if (!saveButton) return;
 
-  if (!userData.id || !userData.name || !userData.phone || !userData.address) {
-    saveButton.disabled = true;
-  } else {
-    saveButton.disabled = false;
-  }
-};
+//   if (!userData.id || !userData.name || !userData.phone || !userData.address) {
+//     saveButton.disabled = true;
+//   } else {
+//     saveButton.disabled = false;
+//   }
+// };
 
-// 啟用保存按鈕
-const enableSaveButton = () => {
-  const saveButton = document.getElementById("saveData");
-  if (saveButton) {
-    saveButton.disabled = false;
-  }
-};
+// // 啟用保存按鈕
+// const enableSaveButton = () => {
+//   const saveButton = document.getElementById("saveData");
+//   if (saveButton) {
+//     saveButton.disabled = false;
+//   }
+// };
 
 // 保存用戶數據
 const saveData = async () => {
@@ -111,10 +111,9 @@ const saveData = async () => {
 
     // 向後端發送請求檢查用戶id是否存在
     const checkResponse = await axios.get(`/api/users/${userData.id}`);
-
-    if (checkResponse.status === 200) {
+    const data = checkResponse.data.result;
+    if (data.length !== 0) {
       // 用戶id存在，執行保存操作
-
       const response = await axios.put(`/api/users/${userData.id}`, userData);
 
       if (response.status === 200) {
@@ -123,7 +122,7 @@ const saveData = async () => {
         clearUserData();
         emit("getData");
 
-        disableSaveButton();
+        // disableSaveButton();
       }
     } else {
       // 用戶id不存在，提示用戶
@@ -148,6 +147,9 @@ const addNew = async () => {
       return;
     }
 
+    const userId = userData.id.trim();
+    userData.id = userId;
+
     // 檢查身分證字號
     if (!idVerify(userData.id)) {
       return;
@@ -164,28 +166,54 @@ const addNew = async () => {
 
     const checkResponse = await axios.get(`/api/users/${userData.id}`);
 
-    if (checkResponse.status === 200) {
-      handleError({ message: "身分證已存在" }, userData.id);
-      return;
-    }
-
-    const response = await axios.post("/api/users", userData);
-    if (response.status === 200) {
-      clearUserData();
-      console.log("New user added", response.data);
-      alert("新增用戶成功！");
-      emit("getData");
-    }
+    const data = checkResponse.data.result;
+    console.log(checkResponse);
+    console.log(data);
+    if (data.length === 0) {
+      console.log(checkResponse);
+      const response = await axios.post("/api/users", userData);
+      if (response.status === 200) {
+        clearUserData();
+        console.log(`New user added:${userData.id}`, response.data);
+        alert("新增用戶成功！");
+        emit("getData");
+      }
+    }else{
+        alert(`身分證${userData.id}已存在，請輸入其他身分證`)
+        return;
+      }
   } catch (e) {
     console.error("Err!! addNew: ", e);
     alert("新增用戶失敗!");
   }
 };
 
+function delCheck (userData){
+  let msg = `確認刪除
+  ID:${userData.id}
+  用戶:${userData.name}
+  電話:${userData.phone}
+  地址:${userData.address}
+  備註:${userData.remark}
+  
+  注意!此操作不可復原!`
+  if(confirm(msg) == true){
+    return true;
+  }else{
+    return false;
+  }
+}
+
 // 刪除用戶
 const deleteItem = async () => {
   // 清除錯誤訊息
   clearErrorMessage();
+
+  // id為空處理
+  if (userData.id === "") {
+      handleError({ message: "請輸入要刪除的身分證字號" }, "id");
+      return;
+    }
 
   try {
     // 檢查用戶輸入是否包含惡意字符
@@ -193,29 +221,27 @@ const deleteItem = async () => {
       return;
     }
 
-    // id為空處理
-    if (userData.id === "") {
-      handleError({ message: "請輸入要刪除的身分證字號" }, "id");
-      return;
-    }
-
     const checkResponse = await axios.get(`/api/users/${userData.id}`);
-    if (checkResponse.status === 200) {
-      // 檢查用戶是否存在
-      const checkResponse = await axios.get(`/api/users/${userData.id}`);
-      if (checkResponse.status !== 200) {
-        alert("用戶不存在");
-        return;
-      }
+    const data = checkResponse.data;
+    if(data.length !== 0){
+      const check = delCheck(userData);
 
-      // 執行刪除
-      const response = await axios.delete(`/api/users/${userData.id}`);
-      if (response.status === 200) {
+      if(check === true){
+        const response = await axios.delete(`/api/users/${userData.id}`);
+        if (response.status === 200) {
         console.log("User deleted", response.data);
         clearUserData();
         alert("刪除用戶成功！");
         emit("getData");
+        }
+      } else {
+        alert("取消刪除");
+        return;
       }
+      
+    } else if(data.length === 0){
+      console.error("User deleted error", response.status);
+      alert("用戶不存在");
     }
   } catch (e) {
     console.error("Err!! deleteItem: ", e);
@@ -228,13 +254,15 @@ const searchData = async () => {
   // 清除錯誤訊息
   clearErrorMessage();
 
+  userData.id = userData.id.trim();
+  
   if (userData.id === "") {
     handleError({ message: "請輸入要查詢的身分證字號" }, "id");
     return;
   }
 
   try {
-    // 檢查是否輸入id;
+    // 檢查用戶輸入是否包含惡意字符
     if (!checkUserInput(userData.id)) {
       return;
     }
@@ -252,12 +280,12 @@ const searchData = async () => {
       if (userData.id) {
         document.getElementById("id").readOnly = true;
       } else {
-        // 如果不是直接编辑数据，则将输入框设置为可编辑状态
+        // 如果不是直接編輯數據，則將輸入框設置為可編輯狀態
         document.getElementById("id").readOnly = false;
       }
 
-      // 保存按鈕
-      enableSaveButton();
+      // // 保存按鈕
+      // enableSaveButton();
     }
   } catch (e) {
     console.error("Err!! searchData: ", e);

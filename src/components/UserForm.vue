@@ -21,7 +21,7 @@ const handleClick = (user) => {
 // 搜尋內容
 const searchValue = computed({
   get() {
-    return props.searchVal;
+    return props.searchVal.trim();
   },
   set(val) {
     emits("changeSearch", val);
