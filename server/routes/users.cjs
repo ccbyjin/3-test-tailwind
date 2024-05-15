@@ -141,14 +141,15 @@ router.put("/:id", connSql, async (req, res) => {
 
 // 處理 DELETE /users/:id 的 API：刪除特定用戶
 router.delete("/:id", connSql, async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.params.id; // 從url獲取用戶id
   try {
-    const request = await req.pool.request();
-
+    const request = await req.pool.request(); // 創建mssql請求物件
+    // 設置SQL查詢的id參數
     request.input("id", sql.Char, userId);
 
+    // 執行刪除語句，刪除list表中的對應數據
     const result = await request.query("DELETE FROM list WHERE id = @id");
-    res.status(200).json(result.recordset);
+    res.status(200).json(result.recordset); // 返回狀態，及數據
   } catch (err) {
     console.error("Error at Delete SQL Server", err);
     res.status(500).send("Error at Delete SQL Server");

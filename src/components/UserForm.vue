@@ -5,42 +5,47 @@ import { exportToExcel } from "../utils/exportUtils.js";
 import { exportToPdf } from "../utils/exportUtils.js";
 import axios from "axios";
 
+// 定義組件屬性
 const props = defineProps(["userData", "searchVal", "selectedPage", "allUser"]);
+// 定義組件事件
 const emits = defineEmits([
-  "clickUser",
-  "searchData",
-  "changeSearch",
-  "changeSort",
-  "changePage",
+  "clickUser", // 點擊用戶事件
+  "searchData", // 搜尋數據事件
+  "changeSearch", // 改變搜尋事件
+  "changeSort", // 改變排序事件
+  "changePage", // 改變頁數事件
 ]);
 
+// 處理用戶點擊事件
 const handleClick = (user) => {
   emits("clickUser", user);
 };
 
-// 搜尋內容
+// 搜尋內容的計算屬性
 const searchValue = computed({
   get() {
-    return props.searchVal.trim();
+    return props.searchVal.trim(); // 返回修剪過的搜尋值
   },
   set(val) {
-    emits("changeSearch", val);
+    emits("changeSearch", val); // 當搜尋值改變時，發出 changeSearch 事件
   },
 });
 
-// 傳遞頁數
+// 傳遞頁數的函數
 const changePage = (page) => {
-  emits("changePage", page);
+  emits("changePage", page); // 發出 changePage 事件並傳遞頁數
 };
 
-// 匯出Execl功能
+// 匯出全部用戶資料到 Excel 的函數
 const exportAllToExcel = async () => {
   try {
+    // 發送 GET 請求獲取所有用戶資料
     // 調用 exportToExcel 方法並傳遞 allUser
     const response = await axios.get("api/users");
     if (response.status === 200) {
+      // 調用 exportToExcel 方法並傳遞 allUser 資料
       await exportToExcel(response.data.allUser);
-      console.log("Excel匯出成功");
+      console.log("Excel匯出成功"); // 打印成功訊息
     }
   } catch (e) {
     console.error("Error to export Data: ", e);
@@ -48,12 +53,13 @@ const exportAllToExcel = async () => {
   }
 };
 
-// 匯出PDF功能
+// 匯出全部用戶資料到 PDF 的函數
 const exportAllToPDF = async () => {
   try {
     // 調用 exportToExcel 方法並傳遞 allUser
     const response = await axios.get("api/users");
     if (response.status === 200) {
+      // 調用 exportToPdf 方法並傳遞 allUser 資料
       await exportToPdf(response.data.allUser);
       console.log("PDF匯出成功");
     }
@@ -63,20 +69,21 @@ const exportAllToPDF = async () => {
   }
 };
 
+// 計算 tempData 的屬性
 const tempData = computed({
   get() {
-    const arr = props.userData?.result;
-    if (!arr || arr.length === 0) return [];
-    const keys = Object.keys(arr[0]);
-    const times = 4 - arr.length;
+    const arr = props.userData?.result; // 獲取 userData 的結果數組
+    if (!arr || arr.length === 0) return []; // 如果結果數組不存在或為空，返回空數組
+    const keys = Object.keys(arr[0]); // 獲取數組中第一個元素的鍵
+    const times = 4 - arr.length; // 計算需要填充的次數，使數組長度達到 4
     for (let i = 0; i < times; i++) {
       const tp = {};
       keys.forEach((key) => {
-        tp[key] = null;
+        tp[key] = null; // 為每個鍵設置值為 null
       });
-      arr.push(tp);
+      arr.push(tp); // 將填充對象推入數組
     }
-    return arr;
+    return arr; // 返回填充後的數組
   },
 });
 </script>

@@ -1,28 +1,28 @@
 const sql = require("mssql");
 
 // sql server 設定
-const config = {
-  user: "sqlap",
-  password: "Ubot@1234",
-  server: "172.16.45.213",
-  database: "list",
-  options: {
-    encrypt: true,
-    trustServerCertificate: true,
-  },
-};
-
-// sa - docker sql server 設定
 // const config = {
-//   user: "sa", //sqlap
-//   password: "strongp@ssword",
-//   server: "localhost",
+//   user: "sqlap",
+//   password: "Ubot@1234",
+//   server: "172.16.45.213",
 //   database: "list",
 //   options: {
 //     encrypt: true,
 //     trustServerCertificate: true,
 //   },
 // };
+
+// sa - docker sql server 設定
+const config = {
+  user: "sa", //sqlap
+  password: "strongp@ssword",
+  server: "localhost",
+  database: "list",
+  options: {
+    encrypt: true,
+    trustServerCertificate: true,
+  },
+};
 
 // sa - sql server 設定
 // const config = {
@@ -57,7 +57,7 @@ module.exports = async (req, res, next) => {
     if (!pool) pool = await sql.connect(config);
     console.log("Connected to SQL Server");
 
-    // 把 sql 連接器往請求體身上放，方便下個函式調用
+    // 把 sql 連接器往請求體req身上放，方便下個函式調用
     req.pool = pool;
     next();
   } catch (err) {

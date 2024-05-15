@@ -55,33 +55,13 @@ const clearErrorMessage = () => {
   errorMessage.name = "";
   errorMessage.phone = "";
   errorMessage.address = "";
-  document.getElementById("id").readOnly = false; // 解除只读状态
+  document.getElementById("id").readOnly = false; // 解除只讀狀態
 };
 
 // 處理保存數據時的錯誤
 const handleError = (error, key = "id") => {
   errorMessage[key] = error.message; // 將錯誤訊息設置到errorMessage中
 };
-
-// // 檢查輸入框是否為空，如果為空禁用按鈕
-// const disableSaveButton = () => {
-//   const saveButton = document.getElementById("saveData");
-//   if (!saveButton) return;
-
-//   if (!userData.id || !userData.name || !userData.phone || !userData.address) {
-//     saveButton.disabled = true;
-//   } else {
-//     saveButton.disabled = false;
-//   }
-// };
-
-// // 啟用保存按鈕
-// const enableSaveButton = () => {
-//   const saveButton = document.getElementById("saveData");
-//   if (saveButton) {
-//     saveButton.disabled = false;
-//   }
-// };
 
 // 保存用戶數據
 const saveData = async () => {
@@ -147,6 +127,7 @@ const addNew = async () => {
       return;
     }
 
+    // id -> trim
     const userId = userData.id.trim();
     userData.id = userId;
 
@@ -164,11 +145,15 @@ const addNew = async () => {
       return;
     }
 
+    // 請求是否已存在此id資料
     const checkResponse = await axios.get(`/api/users/${userData.id}`);
 
+    // 獲取請求結果
     const data = checkResponse.data.result;
-    console.log(checkResponse);
-    console.log(data);
+    // console.log(checkResponse);
+    // console.log(data);
+
+    // 如果資料內容為空 -> POST
     if (data.length === 0) {
       console.log(checkResponse);
       const response = await axios.post("/api/users", userData);
@@ -178,17 +163,18 @@ const addNew = async () => {
         alert("新增用戶成功！");
         emit("getData");
       }
-    }else{
-        alert(`身分證${userData.id}已存在，請輸入其他身分證`)
-        return;
-      }
+    } else {
+      alert(`身分證${userData.id}已存在，請輸入其他身分證`);
+      return;
+    }
   } catch (e) {
     console.error("Err!! addNew: ", e);
     alert("新增用戶失敗!");
   }
 };
 
-function delCheck (userData){
+// 確認刪除提示 優化體驗
+function delCheck(userData) {
   let msg = `確認刪除
   ID:${userData.id}
   用戶:${userData.name}
@@ -196,10 +182,10 @@ function delCheck (userData){
   地址:${userData.address}
   備註:${userData.remark}
   
-  注意!此操作不可復原!`
-  if(confirm(msg) == true){
+  注意!此操作不可復原!`;
+  if (confirm(msg) == true) {
     return true;
-  }else{
+  } else {
     return false;
   }
 }
@@ -211,9 +197,9 @@ const deleteItem = async () => {
 
   // id為空處理
   if (userData.id === "") {
-      handleError({ message: "請輸入要刪除的身分證字號" }, "id");
-      return;
-    }
+    handleError({ message: "請輸入要刪除的身分證字號" }, "id");
+    return;
+  }
 
   try {
     // 檢查用戶輸入是否包含惡意字符
@@ -221,25 +207,27 @@ const deleteItem = async () => {
       return;
     }
 
+    // 檢查此id資料是否存在
     const checkResponse = await axios.get(`/api/users/${userData.id}`);
     const data = checkResponse.data;
-    if(data.length !== 0){
+    // 若回傳資料不為空 -> 發送是否確認刪除提示
+    if (data.length !== 0) {
       const check = delCheck(userData);
 
-      if(check === true){
+      // 確認 -> 刪除該筆資料
+      if (check === true) {
         const response = await axios.delete(`/api/users/${userData.id}`);
         if (response.status === 200) {
-        console.log("User deleted", response.data);
-        clearUserData();
-        alert("刪除用戶成功！");
-        emit("getData");
+          console.log("User deleted", response.data);
+          clearUserData();
+          alert("刪除用戶成功！");
+          emit("getData");
         }
       } else {
         alert("取消刪除");
         return;
       }
-      
-    } else if(data.length === 0){
+    } else if (data.length === 0) {
       console.error("User deleted error", response.status);
       alert("用戶不存在");
     }
@@ -254,8 +242,10 @@ const searchData = async () => {
   // 清除錯誤訊息
   clearErrorMessage();
 
+  // id -> trim
   userData.id = userData.id.trim();
-  
+
+  // 若 id 為空 -> 提示需要輸入身分證
   if (userData.id === "") {
     handleError({ message: "請輸入要查詢的身分證字號" }, "id");
     return;
@@ -267,6 +257,7 @@ const searchData = async () => {
       return;
     }
 
+    // 如果獲取到該筆資料，將資料填充表單
     const response = await axios.get(`/api/users/${userData.id}`);
     if (response.status === 200) {
       // 填充表單
@@ -283,9 +274,6 @@ const searchData = async () => {
         // 如果不是直接編輯數據，則將輸入框設置為可編輯狀態
         document.getElementById("id").readOnly = false;
       }
-
-      // // 保存按鈕
-      // enableSaveButton();
     }
   } catch (e) {
     console.error("Err!! searchData: ", e);
