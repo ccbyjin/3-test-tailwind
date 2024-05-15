@@ -1,22 +1,10 @@
 const sql = require("mssql");
 
 // sql server 設定
-// const config = {
-//   user: "sqlap",
-//   password: "Ubot@1234",
-//   server: "172.16.45.213",
-//   database: "list",
-//   options: {
-//     encrypt: true,
-//     trustServerCertificate: true,
-//   },
-// };
-
-// sa - docker sql server 設定
 const config = {
-  user: "sa", //sqlap
-  password: "strongp@ssword", //Ubot@1234
-  server: "localhost", //172.16.45.213 //192.168.1.114
+  user: "sqlap",
+  password: "Ubot@1234",
+  server: "172.16.45.213",
   database: "list",
   options: {
     encrypt: true,
@@ -24,11 +12,23 @@ const config = {
   },
 };
 
+// sa - docker sql server 設定
+// const config = {
+//   user: "sa", //sqlap
+//   password: "strongp@ssword",
+//   server: "localhost",
+//   database: "list",
+//   options: {
+//     encrypt: true,
+//     trustServerCertificate: true,
+//   },
+// };
+
 // sa - sql server 設定
 // const config = {
 //   user: "sa", //sqlap
-//   password: "strongp@ssword", //Ubot@1234
-//   server: "192.168.1.114", //172.16.45.213 //192.168.1.114
+//   password: "strongp@ssword",
+//   server: "192.168.1.114",
 //   database: "list",
 //   options: {
 //     encrypt: true,
